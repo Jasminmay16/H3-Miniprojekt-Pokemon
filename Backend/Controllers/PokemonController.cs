@@ -1,20 +1,23 @@
-using System.Net; // For HttpStatusCode
-using Microsoft.AspNetCore.Http; // For StatusCodes
-using Microsoft.AspNetCore.Mvc; // For ControllerBase
+using Backend.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Backend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
 public class PokemonController : ControllerBase
 {
-    public string PokemonApi()
-    {
-        var url = "https://api-opgaver.mercantec.tech/go/pokemon";
-        using var client = new HttpClient();
-        var res = await client.GetAsync(url);
-        res.EnsureSuccessStatusCode();
-        var json = await res.Content.ReadAsStringAsync();
+    private readonly PokemonService _pokemonService;
 
-        return json;
+    public PokemonController(PokemonService pokemonService)
+    {
+        _pokemonService = pokemonService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetPokemon()
+    {
+        var json = await _pokemonService.GetPokemonJsonAsync();
+        return Content(json, "application/json");
+    }
 }
