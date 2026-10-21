@@ -1,18 +1,18 @@
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Backend.Services;
 
-namespace Backend;
+var builder = WebApplication.CreateBuilder(args);
 
-public class Program
+builder.Services.AddControllers();
+builder.Services.AddHttpClient<PokemonService>();
+builder.Services.AddCors(options =>
 {
-    public static async Task Main(string[] args)
-    {
-        var builder = WebAssemblyHostBuilder.CreateDefault(args);
-        builder.RootComponents.Add<App>("#app");
-        builder.RootComponents.Add<HeadOutlet>("head::after");
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
 
-        builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+var app = builder.Build();
 
-        await builder.Build().RunAsync();
-    }
-}
+app.UseCors();
+app.MapControllers();
+
+app.Run();
