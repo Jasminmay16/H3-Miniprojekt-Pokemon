@@ -20,4 +20,10 @@ public class PokemonController : ControllerBase
         var json = await _pokemonService.GetPokemonJsonAsync();
         return Content(json, "application/json");
     }
+
+    //Get ID
+
+    //Get Liked(ID)
+
+    //Get Disliked(ID)
 }
