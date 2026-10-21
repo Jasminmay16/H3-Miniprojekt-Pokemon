@@ -14,6 +14,17 @@ public class PokemonService
     {
         var response = await _httpClient.GetAsync(PokemonApiUrl);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        return await response.Content.ReadAsStringAsync();        
+    }
+
+    public async Task<string> GetPokemonIdJsonAsync()
+    {
+        var response = await _httpClient.GetAsync(PokemonApiUrl);
+        
+    }
+
+    public async Task<string> PostPokemonJsonToDBAsync()
+    {
+        
     }
 }
