@@ -1,0 +1,31 @@
+Table Pokemon {
+    id int [pk, increment]
+    name varchar(100) [not null]
+    type1 Type [not null]
+    type2 Type 
+    height double [not null]
+    weight double [not null]
+    liked boolean [not null, default: false]
+    disliked boolean [not null, default: false]
+}
+
+enum Type {
+    Normal
+    Fire
+    Water
+    Grass
+    Electric
+    Ice
+    Fighting
+    Poison
+    Ground
+    Flying
+    Psychic
+    Bug
+    Rock
+    Ghost
+    Dragon
+    Dark
+    Steel
+    Fairy
+}
