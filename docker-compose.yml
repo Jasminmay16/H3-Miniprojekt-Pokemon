@@ -3,7 +3,22 @@ services:
     build:
       context: .
       dockerfile: Backend/Dockerfile
-    ports:
-      - 8080:8080
     environment:
-      - ConnectionStrings__PokemonDB=${CONNECTION_STRING}
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE: "false"
+      ConnectionStrings__PokemonDB: ${CONNECTION_STRING}
+    networks:
+      default:
+        aliases:
+          - h3pokemon-api
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.h3pokemon-api.rule=Host(`h3-silvermagicians.mercantec.tech`)
+      - traefik.http.routers.h3pokemon-api.entrypoints=web
+      - traefik.http.services.h3pokemon-api.loadbalancer.server.port=8080
+
+networks:
+  default:
+    name: dokploy-network
+    external: true
