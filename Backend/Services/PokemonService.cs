@@ -99,7 +99,7 @@ public class PokemonService
             List<Pokemon> pokemons = new List<Pokemon>();
             while (DBcall.Read())
             {
-                pokemons.Append( new Pokemon
+                pokemons.Add(new Pokemon
                 {
                     Id = DBcall.GetInt32(0),
                     Name = DBcall.GetString(1),
