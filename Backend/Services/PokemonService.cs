@@ -8,19 +8,11 @@ using System.Runtime.CompilerServices;
 
 namespace Backend.Services;
 
-public class PokemonService
+public class PokemonService(HttpClient httpClient, string connectionString)
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient = httpClient;
     private const string PokemonApiUrl = "https://api-opgaver.mercantec.tech/go/pokemon/";
-    private static readonly IConfiguration _config = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional:false, reloadOnChange: false)
-    .Build();
-
-    public PokemonService(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
+    private readonly string _connectionString = connectionString;
 
     public async Task<string> GetAllPokemonJsonAsync()
     {
@@ -31,8 +23,7 @@ public class PokemonService
 
     public async Task<Pokemon> GetRandomNonLikedPokemon()
     {
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
         List<Pokemon> pokemons = new List<Pokemon>();
@@ -62,8 +53,7 @@ public class PokemonService
 
     public async Task GetLikedPokemonAsync(int id)
     {
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
         await using (var cmd = new NpgsqlCommand($"CALL LikePokemon(@id)", conn))
@@ -75,8 +65,7 @@ public class PokemonService
 
     public async Task GetDislikedPokemonAsync(int id)
     {
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
         await using (var cmd = new NpgsqlCommand($"CALL DislikePokemon(@id)", conn))
@@ -89,8 +78,7 @@ public class PokemonService
     public async Task<List<Pokemon>> GetAllLikedPokemonAsync()
     {
         //Call database
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
         
         await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetAllLikedPokemon()", conn))
@@ -132,8 +120,7 @@ public class PokemonService
     private async Task SaveToDatabase(Pokemon pokeObj)
     {
         // Insert some data
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
         //Change sql to match our database sql
