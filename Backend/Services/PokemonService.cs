@@ -29,7 +29,7 @@ public class PokemonService(HttpClient httpClient, string connectionString)
         List<Pokemon> pokemons = new List<Pokemon>();
         await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetAllPokemonWithNoLikesOrDislikes()", conn))
         {
-            NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
+            await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
             while (await DBcall.ReadAsync())
             {
                 pokemons.Add(new Pokemon
@@ -75,7 +75,7 @@ public class PokemonService(HttpClient httpClient, string connectionString)
         
         await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetAllLikedPokemon()", conn))
         {
-            NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
+            await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
             List<Pokemon> pokemons = new List<Pokemon>();
             while (DBcall.Read())
             {
