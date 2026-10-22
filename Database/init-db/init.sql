@@ -157,8 +157,19 @@ CREATE PROCEDURE InsertPokemon(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO Pokemon (id, name, type1, type2, height, weight)
-    VALUES (p_id, p_name, p_type1, p_type2, p_height, p_weight);
+    IF NOT EXISTS (SELECT 1 FROM GetPokemonById(p_id)) THEN
+        INSERT INTO Pokemon (id, name, type1, type2, height, weight)
+        VALUES (p_id, p_name, p_type1, p_type2, p_height, p_weight);
+    END IF;
+    ELSE
+        UPDATE Pokemon
+        SET name = p_name,
+            type1 = p_type1,
+            type2 = p_type2,
+            height = p_height,
+            weight = p_weight
+        WHERE id = p_id;
+    END IF;
 END;
 $$;
 
