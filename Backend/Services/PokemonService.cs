@@ -103,11 +103,9 @@ public class PokemonService
                 {
                     Id = DBcall.GetInt32(0),
                     Name = DBcall.GetString(1),
-                    Types =
-                    [
-                        DBcall.GetString(2),
-                        DBcall.GetString(3)
-                    ],
+                    Types = DBcall.IsDBNull(3)
+                        ? [DBcall.GetString(2)]
+                        : [DBcall.GetString(2), DBcall.GetString(3)],
                     Height = DBcall.GetDouble(4),
                     Weight = DBcall.GetDouble(5),
                     Liked = DBcall.GetBoolean(6),
