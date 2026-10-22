@@ -1,28 +1,7 @@
-
 services:
-  
   backend:
     build:
       context: .
       dockerfile: Backend/Dockerfile
     ports:
       - 8080:8080
-  depends_on:
-    database
-  
-  database:
-    container_name: database
-    image: "postgres:latest"
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password 
-      POSTGRES_DB: default_database 
-
-    volumes:
-      - Database:/var/lib/postgresql
-      - ./Database/init-db/:/docker-entrypoint-initdb.d/
-
-volumes:
-  Database:
