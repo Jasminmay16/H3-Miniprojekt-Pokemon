@@ -95,6 +95,24 @@ BEGIN
 END;
 $$;
 
+-- SELECT * FROM GetAllPokemonWithNoLikesOrDislikes();
+CREATE FUNCTION GetAllPokemonWithNoLikesOrDislikes()
+RETURNS TABLE (
+    id INT,
+    name VARCHAR(100),
+    type1 Type,
+    type2 Type,
+    height DOUBLE PRECISION,
+    weight DOUBLE PRECISION,
+    liked BOOLEAN,
+    disliked BOOLEAN
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.liked = FALSE AND p.disliked = FALSE;
+END;
+$$;
 
 -- SELECT * FROM GetAllLikedPokemon();
 CREATE FUNCTION GetAllLikedPokemon()
@@ -148,7 +166,7 @@ $$;
 -- CALL InsertPokemon(id, name, type1, type2, height, weight);
 CREATE PROCEDURE InsertPokemon(
     IN p_id INT,
-    IN p_name VARCHAR(100),
+    IN p_name TEXT,
     IN p_type1 TEXT,
     IN p_type2 TEXT,
     IN p_height DOUBLE PRECISION,
