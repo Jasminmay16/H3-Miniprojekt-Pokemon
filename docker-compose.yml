@@ -5,3 +5,5 @@ services:
       dockerfile: Backend/Dockerfile
     ports:
       - 8080:8080
+    environment:
+      - ConnectionStrings__PokemonDB=${CONNECTION_STRING}
