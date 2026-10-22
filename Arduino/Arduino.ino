@@ -1,31 +1,14 @@
-﻿#include <WiFiNINA.h>
-#include <ArduinoHttpClient.h>
+﻿#include <ArduinoHttpClient.h>
 #include <Arduino_JSON.h>
 #include <Arduino_MKRIoTCarrier.h>
+
 #include "secrets.h"
+#include "Wifi.h"
+#include "ScreenManager.h"
 
 MKRIoTCarrier carrier;
 WiFiSSLClient secureClient;
 HttpClient http(secureClient, BASE_URL, 443);
-
-bool connectWifi() {
-  if (WiFi.status() == WL_CONNECTED) return true;
-  Serial.println("Forbinder til WiFi...");
-  WiFi.begin(SECRET_SSID, SECRET_PASS);
-  unsigned long started = millis();
-  while (WiFi.status() != WL_CONNECTED &&
-  millis() - started < 20000UL) {
-    delay(250);
-    Serial.print(".");
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("\nWiFi fejlede. Tjek navn og kode.");
-    return false;
-  }
-  Serial.print("\nIP: ");
-  Serial.println(WiFi.localIP());
-  return true;
-}
 
 int pokemonId = 0;
 bool hasPokemon = false;
@@ -60,17 +43,8 @@ bool parsePokemonData(const String& body) {
   return true;
 }
 
-void showScreen(String title, String row1, String row2) {
-  carrier.display.fillScreen(ST77XX_BLACK);
-  carrier.display.setTextSize(2);
-  carrier.display.setTextColor(ST77XX_WHITE);
-  printLine(title, 60);
-  printLine(row1, 100);
-  printLine(row2, 135);
-}
-
 bool fetchPokemonBody(String& body) {
-  if (!connectWifi()) return false;
+  if (!WifiManager::connectWifi()) return false;
 
   String path = "/go/pokemon/1";
 
@@ -116,24 +90,24 @@ bool gettingPokemon = false;
 unsigned long lastPokemonAt = 0;
 void loadPokemon() {
   if (gettingPokemon && millis() - lastPokemonAt < 5000UL) {
-    showScreen("Vent lidt", "Mindst 5 sek.", "mellem kald");
+    showScreen(carrier, "Vent lidt", "Mindst 5 sek.", "mellem kald");
     return;
   }
   lastPokemonAt = millis();
   gettingPokemon = true;
   hasPokemon = false;
-  showScreen("Henter data", "Vent...", "");
+  showScreen(carrier, "Henter data", "Vent...", "");
   String body;
   if (fetchPokemonBody(body) && parsePokemonData(body)) {
     gettingPokemon = false;
     showPokemon();
   } else {
-    showScreen("Hentning fejlet", "Se Serial", "Tryk 0 igen");
+    showScreen(carrier, "Hentning fejlet", "Se Serial", "Tryk 0 igen");
   }
 }
 
 bool likeOrDislikePokemon(bool likeOrDislike) {
-  if (!connectWifi()) return false;
+  if (!WifiManager::connectWifi()) return false;
 
   // /like-or-dislike/{id}
   String path = "/";
@@ -160,7 +134,7 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
   Serial.print("HTTP-status: ");
   Serial.println(status);
 
-  // status = 400;
+  status = 400;
 
   if (status == 200) {
     return true;
@@ -170,7 +144,7 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
 }
 
 void showPokemon() {
-  showScreen((String) pokemonId, pokemonName, "Like or Dislike");
+  showScreen(carrier, (String) pokemonId, pokemonName, "Like or Dislike");
 }
 
 String textValue(JSONVar value) {
@@ -179,18 +153,10 @@ String textValue(JSONVar value) {
  return text.length() ? text : "Ikke oplyst";
 }
 
-void printLine(String text, int y) {
-  text = text.substring(0, 14);
-  int16_t x1, y1;
-  uint16_t w, h;
-  carrier.display.getTextBounds(text, 0, y, &x1, &y1, &w, &h);
-  carrier.display.setCursor((240 - (int)w) / 2 - x1, y);
-  carrier.display.print(text);
-}
-
 bool sendingLikeOrDislike = false;
 void likesPokemon() {
   showScreen(
+    carrier,
     "Sending like",
     pokemonName,
     (String) pokemonId
@@ -201,12 +167,13 @@ void likesPokemon() {
   bool status = likeOrDislikePokemon(true);
   if (!status) {
     showScreen(
+      carrier,
       "Fejl for like",
       pokemonName,
       (String) pokemonId
     );
   } else {
-    showScreen("Pokemon", "Liked", "");
+    showScreen(carrier, "Pokemon", "Liked", "");
   }
   delay(2000);
   sendingLikeOrDislike = false;
@@ -215,6 +182,7 @@ void likesPokemon() {
 
 void dislikesPokemon() {
   showScreen(
+    carrier,
     "Sending dislike",
     pokemonName,
     (String) pokemonId
@@ -225,12 +193,13 @@ void dislikesPokemon() {
   bool status = likeOrDislikePokemon(true);
   if (!status) {
     showScreen(
+      carrier,
       "Fejl for dislike",
       pokemonName,
       (String) pokemonId
     );
   } else {
-    showScreen("Pokemon", "Disliked", "");
+    showScreen(carrier, "Pokemon", "Disliked", "");
   }
   delay(2000);
   sendingLikeOrDislike = false;
@@ -242,7 +211,7 @@ void removePokemon() {
   pokemonName = "";
   pokemonSpriteUrl = "";
   hasPokemon = false;
-  showScreen("Get pokemon", "press 00", "");
+  showScreen(carrier, "Get pokemon", "press 00", "");
 }
 
 void setup() {
@@ -256,10 +225,15 @@ void setup() {
     while (true) { delay(100); }
   }
 
-  bool connected = connectWifi();
+
+  bool connected = WifiManager::connectWifi();
   carrier.display.setRotation(0);
   carrier.display.setTextWrap(false);
-  showScreen("Get pokemon", "press 00", "");
+  if (connected) {
+    showScreen(carrier, "Get pokemon", "press 00", "");
+  } else {
+    showScreen(carrier, "No internet", "", "");
+  }
 }
 
 void loop() {
