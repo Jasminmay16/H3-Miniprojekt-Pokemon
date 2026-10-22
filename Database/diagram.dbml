@@ -1,14 +1,3 @@
-Table Pokemon {
-    id int [pk, increment]
-    name varchar(100) [not null]
-    type1 Type [not null]
-    type2 Type 
-    height double [not null]
-    weight double [not null]
-    liked boolean [not null, default: false]
-    disliked boolean [not null, default: false]
-}
-
 enum Type {
     Normal
     Fire
@@ -28,4 +17,23 @@ enum Type {
     Dark
     Steel
     Fairy
+}
+
+Table Pokemon {
+    id int [pk, increment]
+    name varchar(100) [not null]
+    type1 Type [not null]
+    type2 Type 
+    height double [not null]
+    weight double [not null]
+    liked boolean [not null, default: false]
+    disliked boolean [not null, default: false]
+}
+
+
+Table Logs {
+    id int [pk, increment]
+    pokemon_id int [ref: > Pokemon.id]
+    action varchar(500) [not null]
+    created_at timestamp [not null, default: `now()`]
 }
