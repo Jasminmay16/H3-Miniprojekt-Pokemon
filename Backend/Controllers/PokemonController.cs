@@ -33,12 +33,18 @@ public class PokemonController : ControllerBase
          Ok(await _pokemonService.GetRandomNonLikedPokemon());
 
     [HttpGet("like/{id}")]
-    public async Task<IActionResult> LikedPokemonIntoDB(int id) =>
-        Ok(_pokemonService.GetLikedPokemonAsync(id));
+    public async Task<IActionResult> LikedPokemonIntoDB(int id)
+    {
+        await _pokemonService.GetLikedPokemonAsync(id);
+        return Ok();
+    }
 
     [HttpGet("dislike/{id}")]
-    public async Task<IActionResult> DislikedPokemonIntoDB(int id) =>
-         Ok(_pokemonService.GetDislikedPokemonAsync(id));
+    public async Task<IActionResult> DislikedPokemonIntoDB(int id)
+    {
+        await _pokemonService.GetDislikedPokemonAsync(id);
+        return Ok();
+    }
 
     [HttpPost]
     public async Task<IActionResult> PostPokemonToDB() =>
