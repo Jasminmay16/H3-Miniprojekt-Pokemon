@@ -14,7 +14,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
-      - traefik.http.routers.h3pokemon-api.rule=Host(`h3-sølvtryllekunsterne.mercantec.tech`)
+      - traefik.http.routers.h3pokemon-api.rule=Host(`h3-silvermagicians.mercantec.tech`)
       - traefik.http.routers.h3pokemon-api.entrypoints=web
       - traefik.http.services.h3pokemon-api.loadbalancer.server.port=8080
 
