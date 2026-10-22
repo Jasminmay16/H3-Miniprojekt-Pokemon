@@ -7,4 +7,4 @@ riderModule.iml
 .vscode/
 .vs/
 *.dbdiagram
-appsettings.json
+*appsettings.json

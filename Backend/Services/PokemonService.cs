@@ -29,19 +29,6 @@ public class PokemonService
         return await response.Content.ReadAsStringAsync();        
     }
 
-    // public async Task<Pokemon> GetPokemonJsonAsync(int id)
-    // {
-    //     string connstr = _config.GetConnectionString("PokemonDB")!;
-    //     await using var conn = new NpgsqlConnection(connstr);
-    //     await conn.OpenAsync();
-        
-    //     await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetPokemonById(@id)", conn))
-    //     {
-    //         cmd.Parameters.AddWithValue("id", id);
-    //         NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();  
-    //     }
-    // }
-
     public async Task<Pokemon> GetRandomNonLikedPokemon()
     {
         string connstr = _config.GetConnectionString("PokemonDB")!;
@@ -73,15 +60,30 @@ public class PokemonService
         }
     }
 
-    public async Task<Pokemon> GetLikedPokemonAsync(int id)
+    public async Task GetLikedPokemonAsync(int id)
     {
-        var response = await _httpClient.GetAsync($"{PokemonApiUrl}like/{id}");
-        var json = await response.Content.ReadAsStringAsync();
-        var pokemonObject = JsonSerializer.Deserialize<Pokemon>(json);
-        pokemonObject.Liked = true;
+        string connstr = _config.GetConnectionString("PokemonDB")!;
+        await using var conn = new NpgsqlConnection(connstr);
+        await conn.OpenAsync();
 
-       await SaveToDatabase(pokemonObject);
-       return pokemonObject;
+        await using (var cmd = new NpgsqlCommand($"CALL LikePokemon(@id)", conn))
+        {
+            cmd.Parameters.AddWithValue("id", id);
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task GetDislikedPokemonAsync(int id)
+    {
+        string connstr = _config.GetConnectionString("PokemonDB")!;
+        await using var conn = new NpgsqlConnection(connstr);
+        await conn.OpenAsync();
+
+        await using (var cmd = new NpgsqlCommand($"CALL DislikePokemon(@id)", conn))
+        {
+            cmd.Parameters.AddWithValue("id", id);
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 
     public async Task<List<Pokemon>> GetAllLikedPokemonAsync()
@@ -129,7 +131,7 @@ public class PokemonService
         return pokemonObjects;
     }
 
-    public async Task SaveToDatabase(Pokemon pokeObj)
+    private async Task SaveToDatabase(Pokemon pokeObj)
     {
         // Insert some data
         string connstr = _config.GetConnectionString("PokemonDB")!;
