@@ -90,19 +90,19 @@ bool gettingPokemon = false;
 unsigned long lastPokemonAt = 0;
 void loadPokemon() {
   if (gettingPokemon && millis() - lastPokemonAt < 5000UL) {
-    showScreen(carrier, "Vent lidt", "Mindst 5 sek.", "mellem kald");
+    ScreenManager::showScreen(carrier, "Vent lidt", "Mindst 5 sek.", "mellem kald");
     return;
   }
   lastPokemonAt = millis();
   gettingPokemon = true;
   hasPokemon = false;
-  showScreen(carrier, "Henter data", "Vent...", "");
+  ScreenManager::showScreen(carrier, "Henter data", "Vent...", "");
   String body;
   if (fetchPokemonBody(body) && parsePokemonData(body)) {
     gettingPokemon = false;
     showPokemon();
   } else {
-    showScreen(carrier, "Hentning fejlet", "Se Serial", "Tryk 0 igen");
+    ScreenManager::showScreen(carrier, "Hentning fejlet", "Se Serial", "Tryk 0 igen");
   }
 }
 
@@ -134,8 +134,6 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
   Serial.print("HTTP-status: ");
   Serial.println(status);
 
-  status = 400;
-
   if (status == 200) {
     return true;
   } else {
@@ -144,7 +142,7 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
 }
 
 void showPokemon() {
-  showScreen(carrier, (String) pokemonId, pokemonName, "Like or Dislike");
+  ScreenManager::showScreen(carrier, (String) pokemonId, pokemonName, "Like or Dislike");
 }
 
 String textValue(JSONVar value) {
@@ -155,7 +153,7 @@ String textValue(JSONVar value) {
 
 bool sendingLikeOrDislike = false;
 void likesPokemon() {
-  showScreen(
+  ScreenManager::showScreen(
     carrier,
     "Sending like",
     pokemonName,
@@ -166,14 +164,14 @@ void likesPokemon() {
 
   bool status = likeOrDislikePokemon(true);
   if (!status) {
-    showScreen(
+    ScreenManager::showScreen(
       carrier,
       "Fejl for like",
       pokemonName,
       (String) pokemonId
     );
   } else {
-    showScreen(carrier, "Pokemon", "Liked", "");
+    ScreenManager::showScreen(carrier, "Pokemon", "Liked", "");
   }
   delay(2000);
   sendingLikeOrDislike = false;
@@ -181,7 +179,7 @@ void likesPokemon() {
 }
 
 void dislikesPokemon() {
-  showScreen(
+  ScreenManager::showScreen(
     carrier,
     "Sending dislike",
     pokemonName,
@@ -192,14 +190,14 @@ void dislikesPokemon() {
 
   bool status = likeOrDislikePokemon(true);
   if (!status) {
-    showScreen(
+    ScreenManager::showScreen(
       carrier,
       "Fejl for dislike",
       pokemonName,
       (String) pokemonId
     );
   } else {
-    showScreen(carrier, "Pokemon", "Disliked", "");
+    ScreenManager::showScreen(carrier, "Pokemon", "Disliked", "");
   }
   delay(2000);
   sendingLikeOrDislike = false;
@@ -211,7 +209,7 @@ void removePokemon() {
   pokemonName = "";
   pokemonSpriteUrl = "";
   hasPokemon = false;
-  showScreen(carrier, "Get pokemon", "press 00", "");
+  ScreenManager::showScreen(carrier, "Get pokemon", "press 00", "");
 }
 
 void setup() {
@@ -225,14 +223,13 @@ void setup() {
     while (true) { delay(100); }
   }
 
-
   bool connected = WifiManager::connectWifi();
   carrier.display.setRotation(0);
   carrier.display.setTextWrap(false);
   if (connected) {
-    showScreen(carrier, "Get pokemon", "press 00", "");
+    ScreenManager::showScreen(carrier, "Get pokemon", "press 00", "");
   } else {
-    showScreen(carrier, "No internet", "", "");
+    ScreenManager::showScreen(carrier, "No internet", "", "");
   }
 }
 
