@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS Pokemon (
 -- ╚═╝░░░░░░╚═════╝░╚═╝░░╚══╝░╚════╝░░░░╚═╝░░░╚═╝░╚════╝░╚═╝░░╚══╝╚═════╝░
 
 
-
+-- SELECT * FROM GetAllPokemon();
 CREATE FUNCTION GetAllPokemon()
 RETURNS TABLE (
     id INT,
@@ -74,6 +74,7 @@ BEGIN
 END;
 $$;
 
+-- SELECT * FROM GetPokemonById(id);
 CREATE FUNCTION GetPokemonById(
     p_id INT
 )
@@ -94,6 +95,8 @@ BEGIN
 END;
 $$;
 
+
+-- SELECT * FROM GetAllLikedPokemon();
 CREATE FUNCTION GetAllLikedPokemon()
 RETURNS TABLE (
     id INT,
@@ -112,6 +115,8 @@ BEGIN
 END;
 $$;
 
+
+-- SELECT * FROM GetAllDislikedPokemon();
 CREATE FUNCTION GetAllDislikedPokemon()
 RETURNS TABLE (
     id INT,
@@ -139,6 +144,8 @@ $$;
 -- ██║░░░░░██║░░██║╚█████╔╝╚█████╔╝███████╗██████╔╝╚██████╔╝██║░░██║███████╗██████╔╝
 -- ╚═╝░░░░░╚═╝░░╚═╝░╚════╝░░╚════╝░╚══════╝╚═════╝░░╚═════╝░╚═╝░░╚═╝╚══════╝╚═════╝░
 
+
+-- CALL InsertPokemon(id, name, type1, type2, height, weight);
 CREATE PROCEDURE InsertPokemon(
     IN p_id INT,
     IN p_name VARCHAR(100),
@@ -155,6 +162,8 @@ BEGIN
 END;
 $$;
 
+
+-- CALL LikePokemon(id);
 CREATE PROCEDURE LikePokemon(
     IN p_id INT
 )
@@ -167,6 +176,8 @@ BEGIN
 END;
 $$;
 
+
+-- CALL DislikePokemon(id);
 CREATE PROCEDURE DislikePokemon(
     IN p_id INT
 )
