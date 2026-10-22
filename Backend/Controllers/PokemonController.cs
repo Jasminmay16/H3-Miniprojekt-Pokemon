@@ -21,16 +21,20 @@ public class PokemonController : ControllerBase
         return Content(json, "application/json");
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetPokemon(int id)
-    {
-        var json = await _pokemonService.GetPokemonJsonAsync(id);
-        return Content(json, "application/json");
-    }
+    // [HttpGet("{id}")]
+    // public async Task<IActionResult> GetPokemon(int id)
+    // {
+    //     var json = await _pokemonService.GetPokemonJsonAsync(id);
+    //     return Content(json, "application/json");
+    // }
 
-    [HttpPost("{id}/Liked")]
-    public async Task<IActionResult> PostLikedPokemon(int id) => 
-        Ok(await _pokemonService.PostLikedPokemonAsync(id));
+    [HttpGet("random")]
+    public async Task<IActionResult> GetRandomPokemon() =>
+         Ok(await _pokemonService.GetRandomNonLikedPokemon());
+
+    // [HttpGet("like/{id}")]
+    // public async Task<IActionResult> PostLikedPokemon(int id) => 
+    //     Ok(await _pokemonService.PostLikedPokemonAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> PostPokemonToDB() => 
