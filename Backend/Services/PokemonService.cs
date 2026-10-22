@@ -37,15 +37,7 @@ public class PokemonService(HttpClient httpClient, string connectionString)
                     Id = DBcall.GetInt32(0),
                     Name = DBcall.GetString(1),
                 });
-                Console.WriteLine(DBcall.GetInt32(0));
-                Console.WriteLine(DBcall.GetString(1));
             }
-
-            foreach(Pokemon pokemon in pokemons)
-            {
-                Console.WriteLine(pokemon.Name);
-            }
-            Console.WriteLine(pokemons.First().Name);
 
             return pokemons.First();
         }
