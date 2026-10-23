@@ -131,7 +131,29 @@ public class PokemonService(HttpClient httpClient, string connectionString)
         return pokemonObjects;
     }
 
-    // public async Task GetLogs
+    public async Task<List<Log>> GetLogs()
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        List<Log> logs = new List<Log>();
+        await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetLogEntries()", conn))
+        {
+            await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
+            while (DBcall.Read())
+            {
+                logs.Add(new Log
+                {
+                    Id = DBcall.GetInt32(0),
+                    Action = DBcall.GetString(1),
+                    PokemonId = DBcall.GetInt32(2),
+                    PokemonName = DBcall.GetString(3),
+                    CreatedAt = DBcall.GetDateTime(4)
+                });
+            }
+            return logs;
+        }
+    }
     private async Task SaveToDatabase(Pokemon pokeObj)
     {
         // Insert some data

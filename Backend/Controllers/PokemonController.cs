@@ -48,4 +48,8 @@ public class PokemonController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PostPokemonToDB() =>
         Ok(await _pokemonService.PostPokemonJsonToDBAsync());
+
+    [HttpGet]
+    public async Task<IActionResult> GetLogs() =>
+        Ok(await _pokemonService.GetLogs());
 }
