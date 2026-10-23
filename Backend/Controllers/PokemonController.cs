@@ -22,11 +22,19 @@ public class PokemonController : ControllerBase
     [HttpGet("random")]
     public async Task<IActionResult> GetRandomPokemon() =>
          Ok(await _pokemonService.GetRandomNonLikedPokemon());
+         
 
     [HttpGet("like/{id}")]
     public async Task<IActionResult> LikedPokemonIntoDB(int id)
     {
-        await _pokemonService.GetLikedPokemonAsync(id);
+        try
+        {
+            await _pokemonService.GetLikedPokemonAsync(id);
+        }
+        catch(Exception ex)
+        {
+            return StatusCode(500, "Internal server error, by liking pokemon");
+        }
         return Ok();
     }
 
@@ -40,8 +48,4 @@ public class PokemonController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PostPokemonToDB() =>
         Ok(await _pokemonService.PostPokemonJsonToDBAsync());
-
-    //Get Liked(ID)
-
-    //Get Disliked(ID)
 }

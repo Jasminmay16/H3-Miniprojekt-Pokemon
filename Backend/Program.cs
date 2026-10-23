@@ -5,6 +5,8 @@ IConfiguration configuration = builder.Configuration;
 
 string connectionString = configuration.GetConnectionString("PokemonDB") ??
                           throw new Exception("Connection string is not set");
+string url = configuration.GetValue<string>("PokemonApiUrl") ??
+            throw new Exception("No Pokemon api was found");
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient<PokemonService>(httpClient =>
@@ -15,7 +17,7 @@ builder.Services.AddHttpClient<PokemonService>(httpClient =>
 // Re-register with the connection string. The typed client's HttpClient is still injected correctly:
 builder.Services.AddTransient(sp =>
     new PokemonService(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(PokemonService)),
-        connectionString));
+        connectionString, url));
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
