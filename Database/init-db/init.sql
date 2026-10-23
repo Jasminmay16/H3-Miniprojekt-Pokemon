@@ -6,31 +6,42 @@
 -- ░░░██║░░░░░░██║░░░██║░░░░░███████╗██████╔╝
 -- ░░░╚═╝░░░░░░╚═╝░░░╚═╝░░░░░╚══════╝╚═════╝░
 
--- tables are dropped first so DROP TYPE has no dependents to cascade into
+-- tables are dropped first so they never hold a reference to a stale enum
 DROP TABLE IF EXISTS Log;
 DROP TABLE IF EXISTS Pokemon;
 
-DROP TYPE IF EXISTS Type CASCADE;
-CREATE TYPE Type AS ENUM (
-    'normal',
-    'fire',
-    'water',
-    'grass',
-    'electric',
-    'ice',
-    'fighting',
-    'poison',
-    'ground',
-    'flying',
-    'psychic',
-    'bug',
-    'rock',
-    'ghost',
-    'dragon',
-    'dark',
-    'steel',
-    'fairy'
-);
+-- The enum is created only when missing. PostgreSQL has no CREATE OR REPLACE
+-- TYPE, and dropping/recreating it assigns a new OID. Clients such as Npgsql
+-- cache that OID for the lifetime of the process, so a running backend would
+-- keep reading rows tagged with an OID it has never seen and fail with
+-- "DataTypeName '-'" until restarted. Adding a value later therefore needs an
+-- explicit ALTER TYPE Type ADD VALUE '...'.
+DO $$
+BEGIN
+    IF to_regtype('type') IS NULL THEN
+        CREATE TYPE Type AS ENUM (
+            'normal',
+            'fire',
+            'water',
+            'grass',
+            'electric',
+            'ice',
+            'fighting',
+            'poison',
+            'ground',
+            'flying',
+            'psychic',
+            'bug',
+            'rock',
+            'ghost',
+            'dragon',
+            'dark',
+            'steel',
+            'fairy'
+        );
+    END IF;
+END
+$$;
 
 -- MARK: TABLES
 -- ████████╗░█████╗░██████╗░██╗░░░░░███████╗░██████╗
@@ -72,8 +83,8 @@ CREATE OR REPLACE FUNCTION GetAllPokemon()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -83,7 +94,9 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO Log(action, pokemon_id) VALUES ('GetAllPokemon() called', NULL);
-    RETURN QUERY SELECT * FROM Pokemon;
+    RETURN QUERY SELECT p.id, p.name, p.type1::TEXT, p.type2::TEXT,
+                        p.height, p.weight, p.liked, p.disliked
+                 FROM Pokemon AS p;
 END;
 $$;
 
@@ -94,8 +107,8 @@ CREATE OR REPLACE FUNCTION GetPokemonById(
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -115,8 +128,8 @@ CREATE OR REPLACE FUNCTION GetAllPokemonWithNoLikesOrDislikes()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -135,8 +148,8 @@ CREATE OR REPLACE FUNCTION GetAllLikedPokemon()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -156,8 +169,8 @@ CREATE OR REPLACE FUNCTION GetAllDislikedPokemon()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -187,7 +200,8 @@ BEGIN
     RETURN QUERY SELECT l.id, l.action, l.pokemon_id, p.name AS pokemon_name, l.created_at
                  FROM Log AS l
                  LEFT JOIN Pokemon AS p ON l.pokemon_id = p.id
-                 ORDER BY l.created_at DESC, l.id DESC;
+                 ORDER BY l.created_at DESC, l.id DESC
+                 LIMIT 100;
 END;
 $$;
 
