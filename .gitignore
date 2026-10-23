@@ -8,3 +8,4 @@ riderModule.iml
 .vs/
 *.dbdiagram
 appsettings.Development.json
+docker-compose.local.yml
