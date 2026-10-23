@@ -7,4 +7,5 @@ riderModule.iml
 .vscode/
 .vs/
 *.dbdiagram
-*appsettings.json
+appsettings.Development.json
+docker-compose.local.yml
