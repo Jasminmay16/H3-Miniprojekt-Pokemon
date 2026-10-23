@@ -6,6 +6,7 @@
 -- ░░░██║░░░░░░██║░░░██║░░░░░███████╗██████╔╝
 -- ░░░╚═╝░░░░░░╚═╝░░░╚═╝░░░░░╚══════╝╚═════╝░
 
+DROP TYPE IF EXISTS Type CASCADE;
 CREATE TYPE Type AS ENUM (
     'normal',
     'fire',
@@ -35,6 +36,7 @@ CREATE TYPE Type AS ENUM (
 -- ░░░██║░░░██║░░██║██████╦╝███████╗███████╗██████╔╝
 -- ░░░╚═╝░░░╚═╝░░╚═╝╚═════╝░╚══════╝╚══════╝╚═════╝░
 
+DROP TABLE IF EXISTS Pokemon CASCADE;
 CREATE TABLE IF NOT EXISTS Pokemon (
     id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -56,6 +58,7 @@ CREATE TABLE IF NOT EXISTS Pokemon (
 
 
 -- SELECT * FROM GetAllPokemon();
+DROP FUNCTION IF EXISTS GetAllPokemon() CASCADE;
 CREATE FUNCTION GetAllPokemon()
 RETURNS TABLE (
     id INT,
@@ -75,6 +78,7 @@ END;
 $$;
 
 -- SELECT * FROM GetPokemonById(id);
+DROP FUNCTION IF EXISTS GetPokemonById(INT) CASCADE;
 CREATE FUNCTION GetPokemonById(
     p_id INT
 )
@@ -96,6 +100,7 @@ END;
 $$;
 
 -- SELECT * FROM GetAllPokemonWithNoLikesOrDislikes();
+DROP FUNCTION IF EXISTS GetAllPokemonWithNoLikesOrDislikes() CASCADE;
 CREATE FUNCTION GetAllPokemonWithNoLikesOrDislikes()
 RETURNS TABLE (
     id INT,
@@ -115,6 +120,7 @@ END;
 $$;
 
 -- SELECT * FROM GetAllLikedPokemon();
+DROP FUNCTION IF EXISTS GetAllLikedPokemon() CASCADE;
 CREATE FUNCTION GetAllLikedPokemon()
 RETURNS TABLE (
     id INT,
@@ -135,6 +141,7 @@ $$;
 
 
 -- SELECT * FROM GetAllDislikedPokemon();
+DROP FUNCTION IF EXISTS GetAllDislikedPokemon() CASCADE;
 CREATE FUNCTION GetAllDislikedPokemon()
 RETURNS TABLE (
     id INT,
@@ -164,6 +171,7 @@ $$;
 
 
 -- CALL InsertPokemon(id, name, type1, type2, height, weight);
+DROP PROCEDURE IF EXISTS InsertPokemon(INT, TEXT, TEXT, TEXT, DOUBLE PRECISION, DOUBLE PRECISION) CASCADE;
 CREATE PROCEDURE InsertPokemon(
     IN p_id INT,
     IN p_name TEXT,
@@ -192,6 +200,7 @@ $$;
 
 
 -- CALL LikePokemon(id);
+DROP PROCEDURE IF EXISTS LikePokemon(INT) CASCADE;
 CREATE PROCEDURE LikePokemon(
     IN p_id INT
 )
@@ -206,6 +215,7 @@ $$;
 
 
 -- CALL DislikePokemon(id);
+DROP PROCEDURE IF EXISTS DislikePokemon(INT) CASCADE;
 CREATE PROCEDURE DislikePokemon(
     IN p_id INT
 )
