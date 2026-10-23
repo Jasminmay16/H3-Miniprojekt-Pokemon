@@ -104,6 +104,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    -- NULL when the id is unknown, otherwise the FK would reject the log row
     INSERT INTO Log(action, pokemon_id) VALUES ('GetPokemonById(' || p_id || ') called', (SELECT p.id FROM Pokemon AS p WHERE p.id = p_id));
     RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.id = p_id;
 END;
@@ -167,6 +168,26 @@ AS $$
 BEGIN
     INSERT INTO Log(action, pokemon_id) VALUES ('GetAllDislikedPokemon() called', NULL);
     RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.disliked = TRUE;
+END;
+$$;
+
+
+-- SELECT * FROM GetLogEntries();
+CREATE OR REPLACE FUNCTION GetLogEntries()
+RETURNS TABLE (
+    id INT,
+    action VARCHAR(500),
+    pokemon_id INT,
+    pokemon_name VARCHAR(100),
+    created_at TIMESTAMP
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY SELECT l.id, l.action, l.pokemon_id, p.name AS pokemon_name, l.created_at
+                 FROM Log AS l
+                 LEFT JOIN Pokemon AS p ON l.pokemon_id = p.id
+                 ORDER BY l.created_at DESC, l.id DESC;
 END;
 $$;
 
