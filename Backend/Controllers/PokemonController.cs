@@ -15,18 +15,9 @@ public class PokemonController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllPokemon()
-    {
-        var json = await _pokemonService.GetAllPokemonJsonAsync();
-        return Content(json, "application/json");
-    }
+    public async Task<IActionResult> GetAllPokemonFromDB() =>
+        Ok(await _pokemonService.GetAllPokemonJsonAsync());
 
-    // [HttpGet("{id}")]
-    // public async Task<IActionResult> GetPokemon(int id)
-    // {
-    //     var json = await _pokemonService.GetPokemonJsonAsync(id);
-    //     return Content(json, "application/json");
-    // }
 
     [HttpGet("random")]
     public async Task<IActionResult> GetRandomPokemon() =>
