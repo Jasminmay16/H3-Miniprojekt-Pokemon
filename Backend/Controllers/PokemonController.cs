@@ -25,16 +25,9 @@ public class PokemonController : ControllerBase
 
 
     [HttpGet("like/{id:int}")]
-    public async Task<IActionResult> LikedPokemonIntoDB(int id)
+    public async Task<IActionResult> LikedPokemon(int id)
     {
-        try
-        {
-            await _pokemonService.GetLikedPokemonAsync(id);
-        }
-        catch(Exception ex)
-        {
-            return StatusCode(500, "Internal server error, by liking pokemon");
-        }
+        await _pokemonService.GetLikedPokemonAsync(id);
         return Ok();
     }
 
