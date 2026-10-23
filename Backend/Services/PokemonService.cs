@@ -8,10 +8,9 @@ using System.Runtime.CompilerServices;
 
 namespace Backend.Services;
 
-public class PokemonService(HttpClient httpClient, string connectionString, string pokemonApiUrl)
+public class PokemonService(HttpClient httpClient, string connectionString)
 {
     private readonly HttpClient _httpClient = httpClient;
-    private readonly string _pokemonApiUrl = pokemonApiUrl;
     private readonly string _connectionString = connectionString;
 
     public async Task<List<Pokemon>> GetAllPokemonJsonAsync()
@@ -122,7 +121,7 @@ public class PokemonService(HttpClient httpClient, string connectionString, stri
 
     public async Task<List<Pokemon>> PostPokemonJsonToDBAsync()
     {
-        var response = await _httpClient.GetAsync(_pokemonApiUrl);
+        var response = await _httpClient.GetAsync("/go/pokemon");
         var json = await response.Content.ReadAsStringAsync();
         var pokemonObjects = JsonSerializer.Deserialize<List<Pokemon>>(json);
         foreach(Pokemon pokemonObject in pokemonObjects)

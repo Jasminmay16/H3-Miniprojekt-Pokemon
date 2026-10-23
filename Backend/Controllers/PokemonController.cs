@@ -22,9 +22,9 @@ public class PokemonController : ControllerBase
     [HttpGet("random")]
     public async Task<IActionResult> GetRandomPokemon() =>
          Ok(await _pokemonService.GetRandomNonLikedPokemon());
-         
 
-    [HttpGet("like/{id}")]
+
+    [HttpGet("like/{id:int}")]
     public async Task<IActionResult> LikedPokemonIntoDB(int id)
     {
         try
