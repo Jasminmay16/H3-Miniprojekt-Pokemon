@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import LogMessage from "./LogMessage";
 
 const API_URL = "https://h3-silvermagicians-backend.mercantec.tech/api/pokemon/log";
 
@@ -44,7 +44,7 @@ export default function LogWindow() {
     return (
         <div className="log-window">
             {logs.map((log) => (
-                <span key={log.id}>{log.action}</span>
+                <LogMessage key={log.id} log={log} />
             ))}
         </div>
     )

@@ -162,12 +162,23 @@ nav {
   flex-direction: column-reverse;
   overflow-y: auto;
 
-  span {
+  .log-message {
     color: white;
-    display: block;
+    display: flex;
     padding: 4px;
+    font-size: 12px;
+
     &:hover {
       background-color: #ffffff5d;
     }
+  }
+  .log-message-timestamp {
+    
+    margin-right: 8px;
+    flex: 0 0 auto;
+    width: 160px;
+  }
+  .log-message-action {
+    flex: 1;
   }
 }
