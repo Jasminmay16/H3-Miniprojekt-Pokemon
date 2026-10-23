@@ -49,7 +49,7 @@ public class PokemonController : ControllerBase
     public async Task<IActionResult> PostPokemonToDB() =>
         Ok(await _pokemonService.PostPokemonJsonToDBAsync());
 
-    [HttpGet]
+    [HttpGet("log")]
     public async Task<IActionResult> GetLogs() =>
         Ok(await _pokemonService.GetLogs());
 }
