@@ -140,14 +140,16 @@ public class PokemonService(HttpClient httpClient, string connectionString)
         await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetLogEntries()", conn))
         {
             await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
-            while (DBcall.Read())
+            while (await DBcall.ReadAsync())
             {
                 logs.Add(new Log
                 {
                     Id = DBcall.GetInt32(0),
                     Action = DBcall.GetString(1),
-                    PokemonId = DBcall.GetInt32(2),
-                    PokemonName = DBcall.GetString(3),
+                    PokemonId = DBcall.IsDBNull(2) ?
+                    null : DBcall.GetInt32(2),
+                    PokemonName = DBcall.IsDBNull(3) ?
+                    null : DBcall.GetString(3),
                     CreatedAt = DBcall.GetDateTime(4)
                 });
             }
