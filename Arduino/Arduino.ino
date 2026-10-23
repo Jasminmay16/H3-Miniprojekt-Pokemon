@@ -26,8 +26,8 @@ bool parsePokemonData(const String& body) {
 
   pokemonName = textValue(obj["name"]);
   Serial.println(pokemonName);
-  pokemonSpriteUrl = textValue(obj["spriteUrl"]);
-  Serial.println(pokemonSpriteUrl);
+/*   pokemonSpriteUrl = textValue(obj["spriteUrl"]);
+  Serial.println(pokemonSpriteUrl); */
 
   bool hasIdNumber = JSON.typeof(obj["id"]) == "number";
   if (hasIdNumber) {
@@ -46,7 +46,7 @@ bool parsePokemonData(const String& body) {
 bool fetchPokemonBody(String& body) {
   if (!WifiManager::connectWifi()) return false;
 
-  String path = "/go/pokemon/1";
+  String path = "/api/pokemon/random";
 
   http.stop();
   http.setHttpResponseTimeout(10000);
@@ -110,7 +110,7 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
   if (!WifiManager::connectWifi()) return false;
 
   // /like-or-dislike/{id}
-  String path = "/";
+  String path = "/api/pokemon/";
   path += likeOrDislike ? "like" : "dislike";
   path += "/";
   path += (String) pokemonId;
@@ -188,7 +188,7 @@ void dislikesPokemon() {
   
   sendingLikeOrDislike = true;
 
-  bool status = likeOrDislikePokemon(true);
+  bool status = likeOrDislikePokemon(false);
   if (!status) {
     ScreenManager::showScreen(
       carrier,
