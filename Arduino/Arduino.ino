@@ -26,8 +26,8 @@ bool parsePokemonData(const String& body) {
 
   pokemonName = textValue(obj["name"]);
   Serial.println(pokemonName);
-  pokemonSpriteUrl = textValue(obj["spriteUrl"]);
-  Serial.println(pokemonSpriteUrl);
+/*   pokemonSpriteUrl = textValue(obj["spriteUrl"]);
+  Serial.println(pokemonSpriteUrl); */
 
   bool hasIdNumber = JSON.typeof(obj["id"]) == "number";
   if (hasIdNumber) {
@@ -46,7 +46,7 @@ bool parsePokemonData(const String& body) {
 bool fetchPokemonBody(String& body) {
   if (!WifiManager::connectWifi()) return false;
 
-  String path = "/go/pokemon/1";
+  String path = "/api/pokemon/random";
 
   http.stop();
   http.setHttpResponseTimeout(10000);
@@ -66,6 +66,21 @@ bool fetchPokemonBody(String& body) {
   int status = http.responseStatusCode();
   Serial.print("HTTP-status: ");
   Serial.println(status);
+  if (status != 200) {
+    if (status == 500) {
+      ScreenManager::showScreen(carrier, "Error: 500", "Contact support", "");
+    } else if (status == 400) {
+      ScreenManager::showScreen(carrier, "Error: 400", "Bad request", "Check parameters");
+    } else if (status == 401) {
+      ScreenManager::showScreen(carrier, "Error: 401", "Unauthorized", "Not allowed");
+    } else if (status == 403) {
+      ScreenManager::showScreen(carrier, "Error: 403", "Forbidden", "Not allowed");
+    } else if (status == 404) {
+      ScreenManager::showScreen(carrier, "Error: 404", "Not Found", "");
+    }
+    delay(2000);
+    return false;
+  }
 
   if (http.contentLength() > 4096) {
     Serial.println("Svar for stort. Tjek data-filter.");
@@ -90,19 +105,19 @@ bool gettingPokemon = false;
 unsigned long lastPokemonAt = 0;
 void loadPokemon() {
   if (gettingPokemon && millis() - lastPokemonAt < 5000UL) {
-    showScreen(carrier, "Vent lidt", "Mindst 5 sek.", "mellem kald");
+    ScreenManager::showScreen(carrier, "Vent lidt", "Mindst 5 sek.", "mellem kald");
     return;
   }
   lastPokemonAt = millis();
   gettingPokemon = true;
   hasPokemon = false;
-  showScreen(carrier, "Henter data", "Vent...", "");
+  ScreenManager::showScreen(carrier, "Henter data", "Vent...", "");
   String body;
   if (fetchPokemonBody(body) && parsePokemonData(body)) {
     gettingPokemon = false;
     showPokemon();
   } else {
-    showScreen(carrier, "Hentning fejlet", "Se Serial", "Tryk 0 igen");
+    ScreenManager::showScreen(carrier, "Hentning fejlet", "Se Serial", "Tryk 0 igen");
   }
 }
 
@@ -110,7 +125,7 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
   if (!WifiManager::connectWifi()) return false;
 
   // /like-or-dislike/{id}
-  String path = "/";
+  String path = "/api/pokemon/";
   path += likeOrDislike ? "like" : "dislike";
   path += "/";
   path += (String) pokemonId;
@@ -134,17 +149,26 @@ bool likeOrDislikePokemon(bool likeOrDislike) {
   Serial.print("HTTP-status: ");
   Serial.println(status);
 
-  status = 400;
-
-  if (status == 200) {
-    return true;
-  } else {
+  if (status != 200) {
+    if (status == 500) {
+      ScreenManager::showScreen(carrier, "Error: 500", "Contact support", "");
+    } else if (status == 400) {
+      ScreenManager::showScreen(carrier, "Error: 400", "Bad request", "Check parameters");
+    } else if (status == 401) {
+      ScreenManager::showScreen(carrier, "Error: 401", "Unauthorized", "Not allowed");
+    } else if (status == 403) {
+      ScreenManager::showScreen(carrier, "Error: 403", "Forbidden", "Not allowed");
+    } else if (status == 404) {
+      ScreenManager::showScreen(carrier, "Error: 404", "Not Found", "");
+    }
     return false;
+  } else {
+    return true;
   }
 }
 
 void showPokemon() {
-  showScreen(carrier, (String) pokemonId, pokemonName, "Like or Dislike");
+  ScreenManager::showScreen(carrier, (String) pokemonId, pokemonName, "Like or Dislike");
 }
 
 String textValue(JSONVar value) {
@@ -155,7 +179,7 @@ String textValue(JSONVar value) {
 
 bool sendingLikeOrDislike = false;
 void likesPokemon() {
-  showScreen(
+  ScreenManager::showScreen(
     carrier,
     "Sending like",
     pokemonName,
@@ -165,15 +189,8 @@ void likesPokemon() {
   sendingLikeOrDislike = true;
 
   bool status = likeOrDislikePokemon(true);
-  if (!status) {
-    showScreen(
-      carrier,
-      "Fejl for like",
-      pokemonName,
-      (String) pokemonId
-    );
-  } else {
-    showScreen(carrier, "Pokemon", "Liked", "");
+  if (status) {
+    ScreenManager::showScreen(carrier, "Pokemon", "Liked", "");
   }
   delay(2000);
   sendingLikeOrDislike = false;
@@ -181,7 +198,7 @@ void likesPokemon() {
 }
 
 void dislikesPokemon() {
-  showScreen(
+  ScreenManager::showScreen(
     carrier,
     "Sending dislike",
     pokemonName,
@@ -190,16 +207,9 @@ void dislikesPokemon() {
   
   sendingLikeOrDislike = true;
 
-  bool status = likeOrDislikePokemon(true);
-  if (!status) {
-    showScreen(
-      carrier,
-      "Fejl for dislike",
-      pokemonName,
-      (String) pokemonId
-    );
-  } else {
-    showScreen(carrier, "Pokemon", "Disliked", "");
+  bool status = likeOrDislikePokemon(false);
+  if (status) {
+    ScreenManager::showScreen(carrier, "Pokemon", "Disliked", "");
   }
   delay(2000);
   sendingLikeOrDislike = false;
@@ -211,7 +221,7 @@ void removePokemon() {
   pokemonName = "";
   pokemonSpriteUrl = "";
   hasPokemon = false;
-  showScreen(carrier, "Get pokemon", "press 00", "");
+  ScreenManager::showScreen(carrier, "Get pokemon", "press 00", "");
 }
 
 void setup() {
@@ -225,20 +235,17 @@ void setup() {
     while (true) { delay(100); }
   }
 
-
   bool connected = WifiManager::connectWifi();
   carrier.display.setRotation(0);
   carrier.display.setTextWrap(false);
   if (connected) {
-    showScreen(carrier, "Get pokemon", "press 00", "");
-  } else {
-    showScreen(carrier, "No internet", "", "");
+    ScreenManager::showScreen(carrier, "Get pokemon", "press 00", "");
   }
 }
 
 void loop() {
   carrier.Buttons.update();
-  if (carrier.Buttons.onTouchDown(TOUCH0)) loadPokemon();
+  if (!hasPokemon && carrier.Buttons.onTouchDown(TOUCH0)) loadPokemon();
 
   if (!hasPokemon && !sendingLikeOrDislike) return;
   if (carrier.Buttons.onTouchDown(TOUCH3)) dislikesPokemon();

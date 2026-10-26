@@ -9,3 +9,4 @@ riderModule.iml
 *.dbdiagram
 appsettings.Development.json
 docker-compose.local.yml
+secrets.h
