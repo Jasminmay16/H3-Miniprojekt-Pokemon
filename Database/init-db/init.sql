@@ -137,9 +137,28 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    selected_pokemon RECORD;
 BEGIN
+    -- Log the function call
     INSERT INTO Log(action, pokemon_id) VALUES ('GetAllPokemonWithNoLikesOrDislikes() called', NULL);
-    RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.liked = FALSE AND p.disliked = FALSE;
+
+    -- Select a random Pokémon with no likes or dislikes
+    SELECT * INTO selected_pokemon
+    FROM GetAllPokemon() AS p
+    WHERE p.liked = FALSE AND p.disliked = FALSE
+    ORDER BY RANDOM()
+    LIMIT 1;
+
+    -- If a Pokémon is found, log it and return it
+    IF selected_pokemon IS NOT NULL THEN
+        INSERT INTO Log(action, pokemon_id) 
+        VALUES ('Random Pokémon selected: ' || selected_pokemon.name, selected_pokemon.id);
+        RETURN NEXT selected_pokemon;
+    END IF;
+
+    -- If no Pokémon is found, return nothing
+    RETURN;
 END;
 $$;
 

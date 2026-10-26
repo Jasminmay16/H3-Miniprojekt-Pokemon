@@ -13,7 +13,7 @@ public class PokemonService(HttpClient httpClient, string connectionString)
     private readonly HttpClient _httpClient = httpClient;
     private readonly string _connectionString = connectionString;
 
-    public async Task<List<Pokemon>> GetAllPokemonJsonAsync()
+    public async Task<Pokemon> GetAllPokemonJsonAsync()
     {
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
@@ -38,7 +38,11 @@ public class PokemonService(HttpClient httpClient, string connectionString)
 
                 });
             }
-            return pokemons;
+            if (!pokemons.Any())
+                throw new Exception("No Pokémon available with no likes or dislikes.");
+
+            var random = new Random();
+            return pokemons[random.Next(pokemons.Count)];
         }
     }
 
