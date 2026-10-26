@@ -1,28 +1,40 @@
-
 services:
-  
   backend:
     build:
       context: .
       dockerfile: Backend/Dockerfile
-    ports:
-      - 8080:8080
-  depends_on:
-    database
-  
-  database:
-    container_name: database
-    image: "postgres:latest"
-    ports:
-      - 5432:5432
     environment:
-      POSTGRES_USER: username
-      POSTGRES_PASSWORD: password 
-      POSTGRES_DB: default_database 
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE: "false"
+      ConnectionStrings__PokemonDB: ${CONNECTION_STRING}
+    networks:
+      default:
+        aliases:
+          - h3pokemon-api
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.h3pokemon-api.rule=Host(`h3-silvermagicians-backend.mercantec.tech`)
+      - traefik.http.routers.h3pokemon-api.entrypoints=web
+      - traefik.http.services.h3pokemon-api.loadbalancer.server.port=8080
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    environment:
+      PORT: 8080
+    networks:
+      default:
+        aliases:
+          - h3pokemon-frontend
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.h3pokemon-frontend.rule=Host(`h3-silvermagicians.mercantec.tech`)
+      - traefik.http.routers.h3pokemon-frontend.entrypoints=web
+      - traefik.http.services.h3pokemon-frontend.loadbalancer.server.port=8080
 
-    volumes:
-      - Database:/var/lib/postgresql
-      - ./Database/init-db/:/docker-entrypoint-initdb.d/
-
-volumes:
-  Database:
+networks:
+  default:
+    name: dokploy-network
+    external: true

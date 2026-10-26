@@ -8,96 +8,21 @@ using System.Runtime.CompilerServices;
 
 namespace Backend.Services;
 
-public class PokemonService
+public class PokemonService(HttpClient httpClient, string connectionString)
 {
-    private readonly HttpClient _httpClient;
-    private const string PokemonApiUrl = "https://api-opgaver.mercantec.tech/go/pokemon/";
-    private static readonly IConfiguration _config = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional:false, reloadOnChange: false)
-    .Build();
+    private readonly HttpClient _httpClient = httpClient;
+    private readonly string _connectionString = connectionString;
 
-    public PokemonService(HttpClient httpClient)
+    public async Task<List<Pokemon>> GetAllPokemonJsonAsync()
     {
-        _httpClient = httpClient;
-    }
-
-    public async Task<string> GetAllPokemonJsonAsync()
-    {
-        var response = await _httpClient.GetAsync(PokemonApiUrl);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();        
-    }
-
-    public async Task<Pokemon> GetRandomNonLikedPokemon()
-    {
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
         List<Pokemon> pokemons = new List<Pokemon>();
-        await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetAllPokemonWithNoLikesOrDislikes()", conn))
+        await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetAllPokemon()", conn))
         {
-            NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
+            await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
             while (await DBcall.ReadAsync())
-            {
-                pokemons.Add(new Pokemon
-                {
-                    Id = DBcall.GetInt32(0),
-                    Name = DBcall.GetString(1),
-                });
-                Console.WriteLine(DBcall.GetInt32(0));
-                Console.WriteLine(DBcall.GetString(1));
-            }
-
-            foreach(Pokemon pokemon in pokemons)
-            {
-                Console.WriteLine(pokemon.Name);
-            }
-            Console.WriteLine(pokemons.First().Name);
-
-            return pokemons.First();
-        }
-    }
-
-    public async Task GetLikedPokemonAsync(int id)
-    {
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
-        await conn.OpenAsync();
-
-        await using (var cmd = new NpgsqlCommand($"CALL LikePokemon(@id)", conn))
-        {
-            cmd.Parameters.AddWithValue("id", id);
-            await cmd.ExecuteNonQueryAsync();
-        }
-    }
-
-    public async Task GetDislikedPokemonAsync(int id)
-    {
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
-        await conn.OpenAsync();
-
-        await using (var cmd = new NpgsqlCommand($"CALL DislikePokemon(@id)", conn))
-        {
-            cmd.Parameters.AddWithValue("id", id);
-            await cmd.ExecuteNonQueryAsync();
-        }
-    }
-
-    public async Task<List<Pokemon>> GetAllLikedPokemonAsync()
-    {
-        //Call database
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
-        await conn.OpenAsync();
-        
-        await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetAllLikedPokemon()", conn))
-        {
-            NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
-            List<Pokemon> pokemons = new List<Pokemon>();
-            while (DBcall.Read())
             {
                 pokemons.Add(new Pokemon
                 {
@@ -110,16 +35,63 @@ public class PokemonService
                     Weight = DBcall.GetDouble(5),
                     Liked = DBcall.GetBoolean(6),
                     Disliked = DBcall.GetBoolean(7)
-                    
+
                 });
             }
             return pokemons;
         }
     }
 
+    public async Task<Pokemon> GetRandomNonLikedPokemon()
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        List<Pokemon> pokemons = new List<Pokemon>();
+        await using (var cmd = new NpgsqlCommand($"SELECT id, name FROM GetAllPokemonWithNoLikesOrDislikes()", conn))
+        {
+            await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
+            while (await DBcall.ReadAsync())
+            {
+                pokemons.Add(new Pokemon
+                {
+                    Id = DBcall.GetInt32(0),
+                    Name = DBcall.GetString(1),
+                });
+            }
+
+            return pokemons.First();
+        }
+    }
+
+    public async Task GetLikedPokemonAsync(int id)
+    {
+        
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        await using (var cmd = new NpgsqlCommand($"CALL LikePokemon(@id)", conn))
+        {
+            cmd.Parameters.AddWithValue("id", id);
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task GetDislikedPokemonAsync(int id)
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        await using (var cmd = new NpgsqlCommand($"CALL DislikePokemon(@id)", conn))
+        {
+            cmd.Parameters.AddWithValue("id", id);
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
     public async Task<List<Pokemon>> PostPokemonJsonToDBAsync()
     {
-        var response = await _httpClient.GetAsync(PokemonApiUrl);
+        var response = await _httpClient.GetAsync("/go/pokemon");
         var json = await response.Content.ReadAsStringAsync();
         var pokemonObjects = JsonSerializer.Deserialize<List<Pokemon>>(json);
         foreach(Pokemon pokemonObject in pokemonObjects)
@@ -129,11 +101,35 @@ public class PokemonService
         return pokemonObjects;
     }
 
+    public async Task<List<Log>> GetLogs()
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        List<Log> logs = new List<Log>();
+        await using (var cmd = new NpgsqlCommand($"SELECT * FROM GetLogEntries()", conn))
+        {
+            await using NpgsqlDataReader DBcall = await cmd.ExecuteReaderAsync();
+            while (await DBcall.ReadAsync())
+            {
+                logs.Add(new Log
+                {
+                    Id = DBcall.GetInt32(0),
+                    Action = DBcall.GetString(1),
+                    PokemonId = DBcall.IsDBNull(2) ?
+                    null : DBcall.GetInt32(2),
+                    PokemonName = DBcall.IsDBNull(3) ?
+                    null : DBcall.GetString(3),
+                    CreatedAt = DBcall.GetDateTime(4)
+                });
+            }
+            return logs;
+        }
+    }
     private async Task SaveToDatabase(Pokemon pokeObj)
     {
         // Insert some data
-        string connstr = _config.GetConnectionString("PokemonDB")!;
-        await using var conn = new NpgsqlConnection(connstr);
+        await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
 
         //Change sql to match our database sql

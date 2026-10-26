@@ -6,26 +6,42 @@
 -- ░░░██║░░░░░░██║░░░██║░░░░░███████╗██████╔╝
 -- ░░░╚═╝░░░░░░╚═╝░░░╚═╝░░░░░╚══════╝╚═════╝░
 
-CREATE TYPE Type AS ENUM (
-    'normal',
-    'fire',
-    'water',
-    'grass',
-    'electric',
-    'ice',
-    'fighting',
-    'poison',
-    'ground',
-    'flying',
-    'psychic',
-    'bug',
-    'rock',
-    'ghost',
-    'dragon',
-    'dark',
-    'steel',
-    'fairy'
-);
+-- tables are dropped first so they never hold a reference to a stale enum
+DROP TABLE IF EXISTS Log;
+DROP TABLE IF EXISTS Pokemon;
+
+-- The enum is created only when missing. PostgreSQL has no CREATE OR REPLACE
+-- TYPE, and dropping/recreating it assigns a new OID. Clients such as Npgsql
+-- cache that OID for the lifetime of the process, so a running backend would
+-- keep reading rows tagged with an OID it has never seen and fail with
+-- "DataTypeName '-'" until restarted. Adding a value later therefore needs an
+-- explicit ALTER TYPE Type ADD VALUE '...'.
+DO $$
+BEGIN
+    IF to_regtype('type') IS NULL THEN
+        CREATE TYPE Type AS ENUM (
+            'normal',
+            'fire',
+            'water',
+            'grass',
+            'electric',
+            'ice',
+            'fighting',
+            'poison',
+            'ground',
+            'flying',
+            'psychic',
+            'bug',
+            'rock',
+            'ghost',
+            'dragon',
+            'dark',
+            'steel',
+            'fairy'
+        );
+    END IF;
+END
+$$;
 
 -- MARK: TABLES
 -- ████████╗░█████╗░██████╗░██╗░░░░░███████╗░██████╗
@@ -46,6 +62,13 @@ CREATE TABLE IF NOT EXISTS Pokemon (
     disliked BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+CREATE TABLE IF NOT EXISTS Log (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    action VARCHAR(500) NOT NULL,
+    pokemon_id INT REFERENCES Pokemon(id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- MARK: FUNCTIONS
 -- ███████╗██╗░░░██╗███╗░░██╗░█████╗░████████╗██╗░█████╗░███╗░░██╗░██████╗
 -- ██╔════╝██║░░░██║████╗░██║██╔══██╗╚══██╔══╝██║██╔══██╗████╗░██║██╔════╝
@@ -56,12 +79,12 @@ CREATE TABLE IF NOT EXISTS Pokemon (
 
 
 -- SELECT * FROM GetAllPokemon();
-CREATE FUNCTION GetAllPokemon()
+CREATE OR REPLACE FUNCTION GetAllPokemon()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -70,19 +93,22 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    RETURN QUERY SELECT * FROM Pokemon;
+    INSERT INTO Log(action, pokemon_id) VALUES ('GetAllPokemon() called', NULL);
+    RETURN QUERY SELECT p.id, p.name, p.type1::TEXT, p.type2::TEXT,
+                        p.height, p.weight, p.liked, p.disliked
+                 FROM Pokemon AS p;
 END;
 $$;
 
 -- SELECT * FROM GetPokemonById(id);
-CREATE FUNCTION GetPokemonById(
+CREATE OR REPLACE FUNCTION GetPokemonById(
     p_id INT
 )
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -91,17 +117,19 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    -- NULL when the id is unknown, otherwise the FK would reject the log row
+    INSERT INTO Log(action, pokemon_id) VALUES ('GetPokemonById(' || p_id || ') called', (SELECT p.id FROM Pokemon AS p WHERE p.id = p_id));
     RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.id = p_id;
 END;
 $$;
 
 -- SELECT * FROM GetAllPokemonWithNoLikesOrDislikes();
-CREATE FUNCTION GetAllPokemonWithNoLikesOrDislikes()
+CREATE OR REPLACE FUNCTION GetAllPokemonWithNoLikesOrDislikes()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -110,17 +138,18 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    INSERT INTO Log(action, pokemon_id) VALUES ('GetAllPokemonWithNoLikesOrDislikes() called', NULL);
     RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.liked = FALSE AND p.disliked = FALSE;
 END;
 $$;
 
 -- SELECT * FROM GetAllLikedPokemon();
-CREATE FUNCTION GetAllLikedPokemon()
+CREATE OR REPLACE FUNCTION GetAllLikedPokemon()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -129,18 +158,19 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    INSERT INTO Log(action, pokemon_id) VALUES ('GetAllLikedPokemon() called', NULL);
     RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.liked = TRUE;
 END;
 $$;
 
 
 -- SELECT * FROM GetAllDislikedPokemon();
-CREATE FUNCTION GetAllDislikedPokemon()
+CREATE OR REPLACE FUNCTION GetAllDislikedPokemon()
 RETURNS TABLE (
     id INT,
     name VARCHAR(100),
-    type1 Type,
-    type2 Type,
+    type1 TEXT,
+    type2 TEXT,
     height DOUBLE PRECISION,
     weight DOUBLE PRECISION,
     liked BOOLEAN,
@@ -149,7 +179,29 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    INSERT INTO Log(action, pokemon_id) VALUES ('GetAllDislikedPokemon() called', NULL);
     RETURN QUERY SELECT p.* FROM GetAllPokemon() AS p WHERE p.disliked = TRUE;
+END;
+$$;
+
+
+-- SELECT * FROM GetLogEntries();
+CREATE OR REPLACE FUNCTION GetLogEntries()
+RETURNS TABLE (
+    id INT,
+    action VARCHAR(500),
+    pokemon_id INT,
+    pokemon_name VARCHAR(100),
+    created_at TIMESTAMP
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY SELECT l.id, l.action, l.pokemon_id, p.name AS pokemon_name, l.created_at
+                 FROM Log AS l
+                 LEFT JOIN Pokemon AS p ON l.pokemon_id = p.id
+                 ORDER BY l.created_at DESC, l.id DESC
+                 LIMIT 100;
 END;
 $$;
 
@@ -164,7 +216,7 @@ $$;
 
 
 -- CALL InsertPokemon(id, name, type1, type2, height, weight);
-CREATE PROCEDURE InsertPokemon(
+CREATE OR REPLACE PROCEDURE InsertPokemon(
     IN p_id INT,
     IN p_name TEXT,
     IN p_type1 TEXT,
@@ -187,17 +239,20 @@ BEGIN
             weight = p_weight
         WHERE id = p_id;
     END IF;
+    -- logged after the upsert so the FK on pokemon_id resolves
+    INSERT INTO Log(action, pokemon_id) VALUES ('InsertPokemon(' || p_id || ', ' || p_name || ', ' || p_type1 || ', ' || COALESCE(p_type2, 'NULL') || ', ' || p_height || ', ' || p_weight || ') called', p_id);
 END;
 $$;
 
 
 -- CALL LikePokemon(id);
-CREATE PROCEDURE LikePokemon(
+CREATE OR REPLACE PROCEDURE LikePokemon(
     IN p_id INT
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    INSERT INTO Log(action, pokemon_id) VALUES ('LikePokemon(' || p_id || ') called', (SELECT p.id FROM Pokemon AS p WHERE p.id = p_id));
     UPDATE Pokemon
     SET liked = TRUE, disliked = FALSE
     WHERE id = p_id;
@@ -206,12 +261,13 @@ $$;
 
 
 -- CALL DislikePokemon(id);
-CREATE PROCEDURE DislikePokemon(
+CREATE OR REPLACE PROCEDURE DislikePokemon(
     IN p_id INT
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    INSERT INTO Log(action, pokemon_id) VALUES ('DislikePokemon(' || p_id || ') called', (SELECT p.id FROM Pokemon AS p WHERE p.id = p_id));
     UPDATE Pokemon
     SET liked = FALSE, disliked = TRUE
     WHERE id = p_id;
