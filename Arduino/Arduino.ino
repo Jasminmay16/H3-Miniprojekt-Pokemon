@@ -78,6 +78,7 @@ bool fetchPokemonBody(String& body) {
     } else if (status == 404) {
       ScreenManager::showScreen(carrier, "Error: 404", "Not Found", "");
     }
+    delay(2000);
     return false;
   }
 
@@ -244,7 +245,7 @@ void setup() {
 
 void loop() {
   carrier.Buttons.update();
-  if (carrier.Buttons.onTouchDown(TOUCH0)) loadPokemon();
+  if (!hasPokemon && carrier.Buttons.onTouchDown(TOUCH0)) loadPokemon();
 
   if (!hasPokemon && !sendingLikeOrDislike) return;
   if (carrier.Buttons.onTouchDown(TOUCH3)) dislikesPokemon();
